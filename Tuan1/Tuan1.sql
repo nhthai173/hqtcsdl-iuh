@@ -92,9 +92,13 @@ REMOVE FILEGROUP Test1FG1
 --properties và bằng thủ tục hệ thống sp_helpDb, sp_spaceUsed, sp_helpFile.
 --Quan sát và cho biết các trang thể hiện thông tin gì?.
 USE SmallWorks
-sp_helpDb --Truy vấn thông tin
+
+sp_helpDb SmallWorks --Truy vấn thông tin
+
 sp_spaceUsed --Kiểm tra kích thước và dung lượng
+
 sp_helpFIle --xem thông tin về filegroup của database hiện hành
+
 
 --8. Tại cửa sổ properties của CSDL SmallWorks, chọn thuộc tính ReadOnly, sau đó
 --đóng cửa sổ properties. Quan sát màu sắc của CSDL. Dùng lệnh T-SQL gỡ bỏ
@@ -110,32 +114,55 @@ SET MULTI_USER
 
 --9. Trong CSDL SmallWorks, tạo 2 bảng mới theo cấu trúc như sau:
 
-CREATE TABLE Person
+CREATE TABLE dbo.Person
 (
 	PersonID int NOT NULL,
 	FirstName varchar(50) NOT NULL,
-	MiddleName varchar(50) NOT NULL,
+	MiddleName varchar(50) NULL,
 	LastName varchar(50) NOT NULL,
-	EmailAddress nvarchar(50) NULL,
-)ON SWUserData1
+	EmailAddress nvarchar(50) NULL
+) ON SWUserData1
 
-CREATE TABLE Product
+CREATE TABLE dbo.Product
 (
-	 ProductID int NOT NULL,
-	 ProductName varchar(75) NOT NULL,
-	 ProductNumber nvarchar(25) NOT NULL,
-	 StandardCost money NOT NULL,
-	 ListPrice money NOT NULL
- ) ON SWUserData2
+	ProductID int NOT NULL,
+	ProductName varchar(75) NOT NULL,
+	ProductNumber nvarchar(25) NOT NULL,
+	StandardCost money NOT NULL,
+	ListPrice money NOT NULL
+) ON SWUserData2
 
 --10. Chèn dữ liệu vào 2 bảng trên, lấy dữ liệu từ bảng Person và bảng Product trong
 --AdventureWorks2008 (lưu ý: chỉ rõ tên cơ sở dữ liệu và lược đồ), dùng lệnh
 --Insert…Select... Dùng lệnh Select * để xem dữ liệu trong 2 bảng Person và bảng
 --Product trong SmallWorks.
 
+INSERT INTO
+	SmallWorks.dbo.Person
+SELECT
+	BusinessEntityID AS PersonID,
+	FirstName,
+	MiddleName,
+	LastName,
+	EmailPromotion AS EmailAddress
+FROM
+	AdventureWorks2008R2.Person.Person
+
+-- Xem Bang Person
+SELECT * FROM SmallWorks.dbo.Person
 
 
+-- Copy bang Product
+INSERT INTO
+	SmallWorks.dbo.Product
+SELECT
+	ProductID,
+	Name AS ProductName,
+	ProductNumber,
+	StandardCost,
+	ListPrice
+FROM
+	AdventureWorks2008R2.Production.Product
 
-
-
-
+-- Xem Bang Product
+SELECT * FROM SmallWorks.dbo.Product
