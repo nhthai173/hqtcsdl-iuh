@@ -15,9 +15,9 @@ LOG ON
 use Sales
 
 --1 Tạo các kiểu dữliệu người dùng sau
-CREATE TYPE Mota FROM  NVARCHAR(40) NULL;
-CREATE TYPE IDKH FROM  CHAR(10) NOT NULL;
-CREATE TYPE TenKH FROM  CHAR(12) NULL;
+CREATE TYPE dbo.Mota FROM  NVARCHAR(40) NULL;
+CREATE TYPE dbo.IDKH FROM  CHAR(10) NOT NULL;
+CREATE TYPE dbo.DT FROM CHAR(12) NULL;
 
 --2 Tạo các bảng theo cấu trúc sau
 CREATE TABLE SanPham 
@@ -35,7 +35,7 @@ CREATE TABLE KhachHang
     MaKH IDKH NOT NULL,
     TenKH Nvarchar(30),
     Diachi Nvarchar(40),
-    Dienthoai NVARCHAR(15),
+    Dienthoai DT,
 )
 
 CREATE TABLE HoaDon
@@ -53,19 +53,6 @@ CREATE TABLE ChiTietHD
     Masp char(6) NOT NULL,
     SoLuong Int
 )
-
--- DROP TABLE ChiTietHoaDon
--- sp_help ChiTietHoaDon
-
--- ALTER TABLE SanPham 
--- ALTER COLUMN Masp char(6) NOT NULL
-
--- ALTER TABLE KhachHang 
--- ALTER COLUMN MaKH IDKH NOT NULL
-
--- ALTER TABLE HoaDon
--- ALTER COLUMN MaHD char(10) NOT NULL
-
 
 
 --3.Trong Table HoaDon, sửa cột DienGiai thành nvarchar(100)
@@ -165,7 +152,14 @@ VALUES
 -- Có xóa được không? Tại sao? Nếu vẫn muốn xóa thì phải dùng cáchnào?
     DELETE FROM HoaDon
     WHERE MaHD = 'HD0001'
-    --Không xóa được vì có ràng buộc khóa ngoại
+    
+    -- Không xóa được vì có ràng buộc khóa ngoại với bảng ChiTietHD
+    -- Để xóa thì phải xóa bản ghi trong bảng ChiTietHD trước
+    DELETE FROM ChiTietHD
+    WHERE MaHD = 'HD0001'
+    DELETE FROM HoaDon
+    WHERE MaHD = 'HD0001'
+
 
 
 -- 11.Nhập 2 bản ghi mới vào bảng ChiTietHD với MaHD = ‘HD999999999’ và MaHD=’1234567890’.
@@ -174,9 +168,7 @@ VALUES
     VALUES 
     ('HD999999999', 'SP001', 10),
     ('1234567890', 'SP001', 10)
-    --Không nhập được vì có ràng buộc khóa ngoại
-    --Và không thể nhập được vì MaHD không tồn tại trong bảng HoaDon
-    --Nhập 2 chữ số đầu của MaHD không phải là chữ cái
+    -- Không nhập được vì không đúng ràng buộc MaHD_CHECK
 
 -- 12.Đổi tên CSDL Sales thànhBanHang
     ALTER DATABASE Sales MODIFY NAME = BanHang
