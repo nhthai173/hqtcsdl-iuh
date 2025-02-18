@@ -12,7 +12,7 @@ LOG ON
     SIZE = 10MB
 )
 
-use Sales
+USE Sales
 
 --1 Tạo các kiểu dữliệu người dùng sau
 CREATE TYPE dbo.Mota FROM  NVARCHAR(40) NULL;
