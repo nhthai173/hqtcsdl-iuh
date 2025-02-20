@@ -140,20 +140,92 @@ SELECT * FROM ListProduct_view
 --[HumanResources].[Department],
 --[HumanResources].[EmployeeDepartmentHistory],
 --[HumanResources].[EmployeePayHistory].
+CREATE VIEW List_department_View AS 
+SELECT 
+	edh.DepartmentID ,
+	p.Name AS Name,
+	AVG(eph.Rate) AS AvgOfRate
+	
+FROM 
+	HumanResources.Department p
+	JOIN HumanResources.EmployeeDepartmentHistory edh ON p.DepartmentID = edh.DepartmentID
+	JOIN HumanResources.EmployeePayHistory eph ON edh.BusinessEntityID = eph.BusinessEntityID
+
+GROUP BY 
+	edh.DepartmentID, p.Name
+HAVING
+	AVG(eph.Rate) > 30
+GO
+
+SELECT * FROM List_department_View
+
 --8) Tạo view Sales.vw_OrderSummary với từ khóa WITH ENCRYPTION gồm
 --OrderYear (năm của ngày lập), OrderMonth (tháng của ngày lập), OrderTotal
 --(tổng tiền). Sau đó xem thông tin và trợ giúp về mã lệnh của view này
+CREATE VIEW Sales.vw_OrderSummary 
+WITH ENCRYPTION 
+AS
+SELECT 
+	YEAR(sod.OrderDate) AS YEAR,
+	MONTH(sod.OrderDate) AS MONTH,
+	SUM(sod.TotalDue) AS TotalMoney
+FROM
+	Sales.SalesOrderHeader sod
+GROUP BY 
+	YEAR(sod.OrderDate),MONTH(sod.OrderDate)
+GO 
+
+SELECT * FROM Sales.vw_OrderSummary
+
 --9) Tạo view Production.vwProducts với từ khóa WITH SCHEMABINDING
 --gồm ProductID, Name, StartDate,EndDate,ListPrice của bảng Product và bảng
 --ProductCostHistory. Xem thông tin của View. Xóa cột ListPrice của bảng
 --Product. Có xóa được không? Vì sao?
+CREATE VIEW Production.vwProducts
+AS
+SELECT 
+	p.ProductID,
+	p.Name,
+	pch.StartDate,
+	pch.EndDate,
+	p.ListPrice
+FROM
+	Production.Product p
+	JOIN Production.ProductCostHistory pch ON p.ProductID = pch.ProductID
+WITH SCHEMABINDING
+GO
+
+SELECT * FROM Production.vwProducts
+/* không thể xóa cột ListPrice của bảng Product vì view đã được tạo với từ khóa WITH SCHEMABINDING */
+
+
 --10) Tạo view view_Department với từ khóa WITH CHECK OPTION chỉ chứa các
 --phòng thuộc nhóm có tên (GroupName) là “Manufacturing” và “Quality
 --Assurance”, thông tin gồm: DepartmentID, Name, GroupName.
+CREATE VIEW view_Department
+AS
+SELECT 
+	p.DepartmentID,
+	p.Name,
+	p.GroupName
+FROM 
+	HumanResources.Department p
+WHERE 
+	p.GroupName IN ('Manufacturing','Quality')
+WITH CHECK OPTION
+
 --a. Chèn thêm một phòng ban mới thuộc nhóm không thuộc hai nhóm
 --“Manufacturing” và “Quality Assurance” thông qua view vừa tạo. Có
 --chèn được không? Giải thích.
---b. Chèn thêm một phòng mới thuộc nhóm “Manufacturing” và một
---phòng thuộc nhóm “Quality Assurance”.
+INSERT INTO view_Department (p.Name, p.GroupName)
+VALUES ('HT','a')
+/* Không chèn được vì view chỉ chứa các phòng thuộc nhóm có tên (GroupName) là “Manufacturing” và “Quality Assurance” */
+
+--b. Chèn thêm một phòng mới thuộc nhóm “Manufacturing” và một phòng thuộc nhóm “Quality Assurance”.
+INSERT INTO view_Department ( p.Name, p.GroupName)
+VALUES ('HT','Manufacturing')
+
 --c. Dùng câu lệnh Select xem kết quả trong bảng Department.
+SELECT * FROM HumanResources.Department
+GO
 
