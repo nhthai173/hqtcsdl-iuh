@@ -90,6 +90,9 @@ BEGIN
 END
 GO
 
+INSERT INTO SANPHAM(MaSP, TenSP, MaNCC, MaNhom, Đonvitinh, GiaGoc, SLTON)
+VALUES(10, N'Điện thoại', 1, 1, N'Chiếc', 1000000, -10)
+GO
 
 --Câu 5 Tạo HienThi_View gồm: MaNhom,TenNhom,MaSP,TenSP, MaNCC
 --Đonvitinh,GiaGoc,SLTON
@@ -137,5 +140,4 @@ GO
 
 INSERT INTO HienThi_View
 VALUES (10, N'Điện tử', 1, N'Điện thoại', 1, N'Chiếc', 1000000, 10)
-
-SELECT * FROM NHOMSANPHAM
+GO
