@@ -1,4 +1,6 @@
 USE AdventureWorks2008R2
+GO
+
 -- 1) Tạo hai bảng mới trong cơ sở dữ liệu AdventureWorks2008 theo cấu trúc sau: 
     CREATE TABLE MyDepartment (
         DepID SMALLINT NOT NULL PRIMARY KEY,
@@ -14,10 +16,6 @@ USE AdventureWorks2008R2
         DepID SMALLINT NOT NULL FOREIGN KEY REFERENCES MyDepartment(DepID)
     )
 
-ALTER TABLE MyEmployee DROP CONSTRAINT FK_MyEmployee_DepID;
-DROP TABLE MyDepartment;
-
-
 
 
 -- 2)	Dùng 	lệnh 	insert 	<TableName1> 	select 	<fieldList> 	from 
@@ -28,10 +26,15 @@ DROP TABLE MyDepartment;
 
 -- 3)	Tương tự câu 2, chèn 20 dòng dữ liệu cho bảng MyEmployee 
 --      lấy dữ liệu từ 2 bảng  [Person].[Person] và  [HumanResources].[EmployeeDepartmentHistory] 
-    INSERT INTO MyEmployee(EmpID,FrstName,MidName,LstName,DepID)
-    SELECT TOP 20 Person.Person.BusinessEntityID,Person.Person.FirstName,Person.Person.MiddleName,Person.Person.LastName,HumanResources.EmployeeDepartmentHistory.DepartmentID
-    FROM Person.Person
-    JOIN HumanResources.EmployeeDepartmentHistory ON Person.Person.BusinessEntityID = HumanResources.EmployeeDepartmentHistory.BusinessEntityID
+    INSERT INTO MyEmployee(EmpID, FrstName, MidName, LstName, DepID)
+    SELECT TOP 20
+        p.BusinessEntityID,
+        p.FirstName,
+        p.MiddleName,
+        p.LastName,
+        edh.DepartmentID
+    FROM Person.Person p
+    JOIN HumanResources.EmployeeDepartmentHistory edh ON p.BusinessEntityID = edh.BusinessEntityID
     
 -- 4)	Dùng lệnh delete xóa 1 record trong bảng MyDepartment với DepID=1, có thực hiện được không? Vì sao? 
     DELETE FROM MyDepartment WHERE MyDepartment.DepID = 1
