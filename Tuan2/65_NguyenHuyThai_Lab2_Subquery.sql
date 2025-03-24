@@ -26,49 +26,51 @@ WHERE
     CountOfOrder > 100
 
 
--- 2)Liệt kê các sản phẩm (ProductID,Name) có số hóa đơn đặt hàng nhiều nhất trong tháng 7/2008
+-- 2) Liệt kê các sản phẩm (ProductID, Name) có số hóa đơn đặt hàng nhiều nhất
+-- trong tháng 7/2008
 
-SELECT TOP 1
-    ProductID,
-    Name
-FROM (
-        SELECT
-        pd.ProductID,
-        pd.Name,
-        COUNT(sod.SalesOrderID) AS CountOfOrder
-    FROM
-        Production.Product pd
-        JOIN Sales.SalesOrderDetail sod ON pd.ProductID = sod.ProductID
-        JOIN Sales.SalesOrderHeader soh ON sod.SalesOrderID = soh.SalesOrderID
-    WHERE
-        MONTH(soh.OrderDate) = 7
-        AND YEAR(soh.OrderDate) = 2008
-    GROUP BY
-        pd.ProductID,
-        pd.Name) AS orders
-ORDER BY
-    CountOfOrder DESC
-
--- 3)Hiển thị thông tin của khách hàng có số đơn đặt hàng nhiều nhất,
--- thông tin gồm: CustomerID, Name, CountOfOrder
-
-SELECT TOP 1
-    p.BusinessEntityID AS CustomerID,
-    p.FirstName + ' ' + p.LastName AS Name,
-    orders.CountOfOrder
+SELECT
+    p.ProductID,
+    p.Name,
+    COUNT(sod.SalesOrderID)
 FROM
-    (
-        SELECT
-            COUNT(soh.SalesOrderID) AS CountOfOrder,
-            soh.CustomerID
-        FROM
-            Sales.SalesOrderHeader soh
-        GROUP BY
-            soh.CustomerID
-    ) AS orders
-    JOIN Person.Person p ON orders.CustomerID = p.BusinessEntityID
-ORDER BY
-    orders.CountOfOrder DESC
+    Sales.SalesOrderHeader soh
+    JOIN Sales.SalesOrderDetail sod ON soh.SalesOrderID = sod.SalesOrderID
+    JOIN Production.Product p ON p.ProductID = sod.ProductID
+WHERE
+    MONTH(soh.OrderDate) = 7
+    AND YEAR(soh.OrderDate) = 2008
+GROUP BY
+    p.ProductID,
+    p.Name
+HAVING
+    COUNT(sod.SalesOrderID) >= ALL ( SELECT COUNT(sod.SalesOrderID)
+                                    FROM Sales.SalesOrderHeader soh
+                                    JOIN Sales.SalesOrderDetail sod ON soh.SalesOrderID = sod.SalesOrderID
+                                    JOIN Production.Product p ON p.ProductID = sod.ProductID
+                                    WHERE MONTH(soh.OrderDate) = 7 AND YEAR(soh.OrderDate) = 2008
+                                    GROUP BY p.ProductID, p.Name)
+
+
+-- 3) Hiển thị thông tin của khách hàng có số đơn đặt hàng nhiều nhất, thông tin gồm:
+-- CustomerID, Name, CountOfOrder
+
+SELECT 
+	 c.CustomerID,
+	 p.FirstName +' '+ p.LastName AS FullName,
+	 COUNT(soh.SalesOrderID) AS CountOfOrder
+FROM Sales.Customer c
+	 JOIN Person.Person p ON p.BusinessEntityID = c.PersonID
+	 JOIN Sales.SalesOrderHeader soh ON soh.CustomerID = c.CustomerID
+GROUP BY 
+	c.CustomerID,
+	p.FirstName +' '+ p.LastName
+HAVING COUNT(soh.SalesOrderID) >= ALL(  SELECT  COUNT(soh.SalesOrderID)
+										FROM Sales.Customer c
+                                        JOIN Person.Person p ON p.BusinessEntityID = c.PersonID
+                                        JOIN Sales.SalesOrderHeader soh ON soh.CustomerID = c.CustomerID
+										GROUP BY c.CustomerID)
+
 
 
 -- 4)Liệt kê các sản phẩm (ProductID,Name)thuộc mô hình sản phẩm áo dài tay với tên bắt đầu với “Long-SleeveLogoJersey”,
@@ -109,23 +111,24 @@ WHERE
             AND pm.Name LIKE 'Long-Sleeve Logo Jersey%'
     )
 
--- 5) Tìm các mô hình sản phẩm (ProductModelID) mà giá niêm yết (listprice)
--- tối đa cao hơn giá trung bình của tất cả các mô hình.
+
+
+
+
+--5) Tìm các mô hình sản phẩm (ProductModelID) mà giá niêm yết (list price) tối
+--đa cao hơn giá trung bình của tất cả các mô hình.
 
 SELECT
-    DISTINCT pd.ProductModelID
-FROM
-    Production.Product pd
-    JOIN Production.ProductModel pm ON pd.ProductModelID = pm.ProductModelID
-WHERE
-    pd.ListPrice >
-    (
-        SELECT
-            AVG(pd.ListPrice) AS AvgListPrice
-        FROM
-            Production.Product pd
-            JOIN Production.ProductModel pm ON pd.ProductModelID = pm.ProductModelID
-    )
+	pm.Name,
+	MAX(ListPrice) AS MaxListPrice
+FROM Production.Product p 
+	JOIN Production.ProductModel pm ON pm.ProductModelID = p.ProductModelID
+GROUP BY
+	pm.Name
+HAVING
+	MAX(ListPrice) > (SELECT AVG(ListPrice) FROM Production.Product p)
+
+
 
 
 -- 6)Liệt kê các sản phẩm gồm các thông tin ProductID, Name, có tổng số lượng đặt hàng >5000 (dùng IN, EXISTS)
@@ -190,6 +193,23 @@ WHERE
             Sales.SalesOrderDetail sod
     )
 
+
+
+
+-- 7)Liệt kê những sản phẩm (ProductID, UnitPrice) có đơn giá (UnitPrice) cao nhất trong bảng Sales.SalesOrderDetail
+
+SELECT
+    DISTINCT pd.ProductID,
+    sod.UnitPrice
+FROM
+    Production.Product pd
+    JOIN Sales.SalesOrderDetail sod ON pd.ProductID = sod.ProductID
+WHERE
+    sod.UnitPrice = (SELECT MAX(sod1.UnitPrice) FROM Sales.SalesOrderDetail sod1)
+
+
+
+
 -- 8)Liệt kê các sản phẩm không có đơn đặt hàng nào thông tin gồm ProductID, Name;
 -- dùng 3 cách Not in, Not exists và Leftjoin.
 
@@ -239,7 +259,7 @@ WHERE
 -- thông tin gồm EmployeeID,   FirstName,   LastName   (dữ   liệu từ   2   bảng HumanResources.Employees và Sales.SalesOrdersHeader)
 
 SELECT
-    e.BusinessEntityID AS Employee,
+    e.BusinessEntityID AS EmployeeID,
     p.FirstName,
     p.LastName
 FROM
